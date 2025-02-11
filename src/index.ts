@@ -19,6 +19,7 @@ import {
     SupabaseClient,
     type RealtimeChannelSendResponse,
 } from '@supabase/supabase-js'
+import { ChannelError } from './errors'
 
 export type ChannelEvent =
     | 'presence'
@@ -169,7 +170,7 @@ export class ChannelService {
      */
     send(message: ChannelMessage): Promise<RealtimeChannelSendResponse> {
         if (!this.channel) {
-            throw new Error('Channel not initialized')
+            throw new ChannelError('Channel not initialized')
         }
         return this.channel.send(message)
     }

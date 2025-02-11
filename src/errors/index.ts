@@ -9,27 +9,9 @@ export class AppError extends Error {
     }
 }
 
-export class NotFoundError extends AppError {
-    constructor(message = 'Resource not found') {
-        super(message, 'NOT_FOUND')
-    }
-}
-
-export class ValidationError extends AppError {
-    constructor(message = 'Validation failed') {
-        super(message, 'VALIDATION_ERROR')
-    }
-}
-
-export class UnauthorizedError extends AppError {
-    constructor(message = 'Unauthorized access') {
-        super(message, 'UNAUTHORIZED')
-    }
-}
-
-export class DatabaseError extends AppError {
-    constructor(message = 'Database operation failed') {
-        super(message, 'DATABASE_ERROR')
+export class ChannelError extends AppError {
+    constructor(message = 'Channel operation failed') {
+        super(message, 'CHANNEL_ERROR')
     }
 }
 
