@@ -1,0 +1,13 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": false, // Allow emitting files
+        "emitDeclarationOnly": true, // Only emit declaration files
+        "declaration": true, // Generate .d.ts files
+        "outDir": "./dist", // Output directory for generated files
+        "rootDir": "./src",
+        "skipLibCheck": true // (Optional) Skip type checking of library files
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["node_modules", "**/*.test.ts"]
+}
