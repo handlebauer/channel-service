@@ -1,5 +1,5 @@
 {
-    "name": "channel-service",
+    "name": "@get-snippets/channel-service",
     "version": "0.2.2",
     "type": "module",
     "main": "dist/index.js",
