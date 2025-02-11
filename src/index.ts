@@ -36,6 +36,12 @@ export interface ChannelMessage {
     payload: Record<string, unknown>
 }
 
+export interface PresenceState {
+    online_at: string
+    client_type: 'web' | 'mobile'
+    session_code: string
+}
+
 type EventHandler = (message: ChannelMessage) => void
 
 /**
@@ -59,11 +65,59 @@ export class ChannelService {
     ) {}
 
     /**
+     * Gets the current presence state of the channel.
+     */
+    getPresenceState(): Record<string, PresenceState[]> {
+        if (!this.channel) return {}
+
+        const rawState = this.channel.presenceState()
+        return Object.entries(rawState).reduce(
+            (acc, [key, presences]) => {
+                const validPresences = (presences as unknown[]).filter(
+                    (p): p is Record<string, unknown> =>
+                        p != null &&
+                        typeof p === 'object' &&
+                        'online_at' in p &&
+                        'client_type' in p &&
+                        'session_code' in p &&
+                        typeof p.online_at === 'string' &&
+                        (p.client_type === 'web' ||
+                            p.client_type === 'mobile') &&
+                        typeof p.session_code === 'string',
+                )
+
+                if (validPresences.length > 0) {
+                    acc[key] = validPresences.map(p => ({
+                        online_at: p.online_at as string,
+                        client_type: p.client_type as 'web' | 'mobile',
+                        session_code: p.session_code as string,
+                    }))
+                }
+                return acc
+            },
+            {} as Record<string, PresenceState[]>,
+        )
+    }
+
+    /**
      * Initializes the channel by subscribing and syncing presence.
      */
     async init(): Promise<void> {
         const topic = `${this.channelPrefix}:${this.pairingCode}`
         this.channel = this.supabase.channel(topic, { config: CHANNEL_CONFIG })
+
+        // Set up presence event listeners
+        this.channel.on('presence', { event: 'sync' }, () => {
+            this.notifyPresenceChange()
+        })
+
+        this.channel.on('presence', { event: 'join' }, () => {
+            this.notifyPresenceChange()
+        })
+
+        this.channel.on('presence', { event: 'leave' }, () => {
+            this.notifyPresenceChange()
+        })
 
         // Set up a generic broadcast event listener.
         this.channel.on('system', { event: '*' }, (message: ChannelMessage) => {
@@ -73,6 +127,18 @@ export class ChannelService {
 
         // Subscribe to the channel and wait for presence to sync.
         await this.subscribeAndSyncPresence()
+    }
+
+    /**
+     * Notifies all presence event handlers of the current presence state.
+     */
+    private notifyPresenceChange(): void {
+        const state = this.getPresenceState()
+        this.dispatch({
+            type: 'presence',
+            event: 'presence',
+            payload: { state },
+        })
     }
 
     /**
@@ -98,6 +164,7 @@ export class ChannelService {
                     // Track this client as online.
                     this.channel?.track({
                         online_at: new Date().toISOString(),
+                        client_type: 'web',
                         session_code: this.pairingCode,
                     })
 
